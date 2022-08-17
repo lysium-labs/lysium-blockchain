@@ -35,6 +35,13 @@ A key difference between Lysium Network and other decentralized networks is the 
 
 The Lysium Network protocol employs a novel approach to consensus to achieve its strong safety guarantees, quick finality, and high-throughput without compromising decentralization. Capable of 20,000 – 25,000 real transactions per second (up to 200,000 TPS with LSX 2.0 Upgrade) - an order of magnitude greater than existing blockchains (fastest EVM-Compatible Chain).
 
+## Security
+---
+
+__The Lysium Network added a feature in which the node generates a hash of the state of the blockchain and publishes it on the public Bitcon blockchain. This is used in order to secure the network against blockchain rewrites and redeployments. By having the blockchain secured by the most trusted blockchain in the world (Bitcoin blockchain), gives the users and investors an enhanced security.__
+
+The current state of the blockchain is hashed using `md5` cryptographic function. The resulted hash is then attached to a Bitcoin transaction with 0 value. This transaction is published on the Bitcoin network. This action occurs roughly every 30 days.
+
 ## Build the source-code
 ---
 

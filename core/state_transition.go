@@ -1,18 +1,18 @@
-// Copyright 2014 The go-ethereum Authors
-// This file is part of the go-ethereum library.
+// Copyright 2014 The Lysium Authors
+// This file is part of the Lysium library.
 //
-// The go-ethereum library is free software: you can redistribute it and/or modify
+// The Lysium library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-ethereum library is distributed in the hope that it will be useful,
+// The Lysium library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
+// along with the Lysium library. If not, see <http://www.gnu.org/licenses/>.
 
 package core
 
@@ -71,6 +71,19 @@ type Message interface {
 	CheckNonce() bool
 	Data() []byte
 	AccessList() types.AccessList
+}
+
+// ImplementStateTransition initialises and returns a new state transition object.
+func ImplementStateTransition(evm *vm.EVM, msg Message, gp *GasPool) *StateTransition {
+	return &StateTransition{
+		gp:       gp,
+		evm:      evm,
+		msg:      msg,
+		gasPrice: msg.GasPrice(),
+		value:    msg.Value(),
+		data:     msg.Data(),
+		state:    evm.StateDB,
+	}
 }
 
 // ExecutionResult includes all output after executing given evm
@@ -149,30 +162,6 @@ func IntrinsicGas(data []byte, accessList types.AccessList, isContractCreation b
 	return gas, nil
 }
 
-// NewStateTransition initialises and returns a new state transition object.
-func NewStateTransition(evm *vm.EVM, msg Message, gp *GasPool) *StateTransition {
-	return &StateTransition{
-		gp:       gp,
-		evm:      evm,
-		msg:      msg,
-		gasPrice: msg.GasPrice(),
-		value:    msg.Value(),
-		data:     msg.Data(),
-		state:    evm.StateDB,
-	}
-}
-
-// ApplyMessage computes the new state by applying the given message
-// against the old state within the environment.
-//
-// ApplyMessage returns the bytes returned by any EVM execution (if it took place),
-// the gas used (which includes gas refunds) and an error if it failed. An error always
-// indicates a core error meaning that the message would always fail for that particular
-// state and would never be accepted within a block.
-func ApplyMessage(evm *vm.EVM, msg Message, gp *GasPool) (*ExecutionResult, error) {
-	return NewStateTransition(evm, msg, gp).TransitionDb()
-}
-
 // to returns the recipient of the message.
 func (st *StateTransition) to() common.Address {
 	if st.msg == nil || st.msg.To() == nil /* contract creation */ {
@@ -184,7 +173,7 @@ func (st *StateTransition) to() common.Address {
 func (st *StateTransition) buyGas() error {
 	// @lysium: We deduct from the sender the required amount of fee
 	// mgval := new(big.Int).Mul(new(big.Int).SetUint64(st.msg.Gas()), st.gasPrice)
-	mgval := calculateNetworkFee(st.gasPrice, st.msg.Gas(), st.msg.Nonce());
+	mgval := processTransactionCost(st.gasPrice, st.msg.Gas(), st.msg.Nonce());
 
 	if have, want := st.state.GetBalance(st.msg.From()), mgval; have.Cmp(want) < 0 {
 		return fmt.Errorf("%w: address %v have %v want %v", ErrInsufficientFunds, st.msg.From().Hex(), have, want)
@@ -199,8 +188,19 @@ func (st *StateTransition) buyGas() error {
 	return nil
 }
 
+// ApplyMessage computes the new state by applying the given message
+// against the old state within the environment.
+//
+// ApplyMessage returns the bytes returned by any EVM execution (if it took place),
+// the gas used (which includes gas refunds) and an error if it failed. An error always
+// indicates a core error meaning that the message would always fail for that particular
+// state and would never be accepted within a block.
+func ApplyMessage(evm *vm.EVM, msg Message, gp *GasPool) (*ExecutionResult, error) {
+	return ImplementStateTransition(evm, msg, gp).TransitionDb()
+}
+
 // @lysium: Added network fee
-func calculateNetworkFee(gasPrice *big.Int, gasUnits uint64, nonce uint64) *big.Int {
+func processTransactionCost(gasPrice *big.Int, gasUnits uint64, nonce uint64) *big.Int {
 
 	result := 0.8 + (float64(0.2)/(1+ math.Pow(float64(nonce),2)))
 	result = math.Floor(result*1000000)/1000000
@@ -296,7 +296,7 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error) {
 	} else {
 		// @lysium: We change the fee distribution to the coinbase wallet
 		nonce := st.state.GetNonce(sender.Address())+1
-		st.state.AddBalance(st.evm.Context.Coinbase, calculateNetworkFee(st.gasPrice, st.gasUsed(), nonce))
+		st.state.AddBalance(st.evm.Context.Coinbase, processTransactionCost(st.gasPrice, st.gasUsed(), nonce))
 
 		// @lysium: Initial balance for coinbase
 		// st.state.AddBalance(st.evm.Context.Coinbase, new(big.Int).Mul(new(big.Int).SetUint64(st.gasUsed()), st.gasPrice))

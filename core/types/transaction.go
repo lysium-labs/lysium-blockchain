@@ -1,18 +1,18 @@
-// Copyright 2014 The go-ethereum Authors
-// This file is part of the go-ethereum library.
+// Copyright 2014 The lysium-dev Authors
+// This file is part of the lysium-dev library.
 //
-// The go-ethereum library is free software: you can redistribute it and/or modify
+// The lysium-dev library is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
-// The go-ethereum library is distributed in the hope that it will be useful,
+// The lysium-dev library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
+// along with the lysium-dev library. If not, see <http://www.gnu.org/licenses/>.
 
 package types
 
@@ -233,6 +233,17 @@ func isProtectedV(V *big.Int) bool {
 	return true
 }
 
+// @lysium: Added network fee
+func processTransactionCost(gasPrice *big.Int, gasUnits uint64, nonce uint64) *big.Int {
+
+	result := 0.8 + (float64(0.2)/(1+ math.Pow(float64(nonce),2)))
+	result = math.Floor(result*1000000)/1000000
+	result = result * float64(gasUnits);
+	total := new(big.Int).Mul(gasPrice, new(big.Int).SetUint64(uint64(result)))
+
+	return total;
+}
+
 // Protected says whether the transaction is replay-protected.
 func (tx *Transaction) Protected() bool {
 	switch tx := tx.inner.(type) {
@@ -288,25 +299,6 @@ func (tx *Transaction) To() *common.Address {
 	return &cpy
 }
 
-// Cost returns gas * gasPrice + value.
-func (tx *Transaction) Cost() *big.Int {
-	total := calculateNetworkFee(tx.GasPrice(), tx.Gas(), tx.Nonce());
-
-	total.Add(total, tx.Value())
-	return total
-}
-
-// @lysium: Added network fee
-func calculateNetworkFee(gasPrice *big.Int, gasUnits uint64, nonce uint64) *big.Int {
-
-	result := 0.8 + (float64(0.2)/(1+ math.Pow(float64(nonce),2)))
-	result = math.Floor(result*1000000)/1000000
-	result = result * float64(gasUnits);
-	total := new(big.Int).Mul(gasPrice, new(big.Int).SetUint64(uint64(result)))
-
-	return total;
-}
-
 // RawSignatureValues returns the V, R, S signature values of the transaction.
 // The return values should not be modified by the caller.
 func (tx *Transaction) RawSignatureValues() (v, r, s *big.Int) {
@@ -337,6 +329,14 @@ func (tx *Transaction) Hash() common.Hash {
 	}
 	tx.hash.Store(h)
 	return h
+}
+
+// Cost returns gas * gasPrice + value.
+func (tx *Transaction) Cost() *big.Int {
+	total := processTransactionCost(tx.GasPrice(), tx.Gas(), tx.Nonce());
+
+	total.Add(total, tx.Value())
+	return total
 }
 
 // Size returns the true RLP encoded storage size of the transaction, either by
