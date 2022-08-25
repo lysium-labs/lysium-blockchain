@@ -1,9 +1,9 @@
 # Lysium Network Blockchain
 
 
-__The Lysium Network blockchain is an EVM-compatible blockchain that runs a version of Pot (Proof-of-Trade) consensus mechanism.__
+__The Lysium Network blockchain is an EVM-compatible blockchain that runs a version of PoU (Proof-of-Usage) consensus mechanism.__
 
-The Lysium blockchain is a decentralized ledger of transactions. No entity is controlling a blockchain, there are only actors participating in its growth and integrity. Based on the Proof of Trade protocol, the system cannot be hacked, modified, or shut down by any of the users.
+The Lysium blockchain is a decentralized ledger of transactions. No entity is controlling a blockchain, there are only actors participating in its growth and integrity. Based on the Proof of Usage protocol, the system cannot be hacked, modified, or shut down by any of the users.
 
 ## Block generation
 --- 
@@ -19,12 +19,12 @@ __LSX will run on Lysium Network Chain in the same way as ETH runs on Ethereum s
 - pay gas to deploy or invoke Smart Contract on Lysium Network Chain
 - stake and receive rewards by becoming a validator on the network
 
-## Proof of Trade (PoT)
+## Proof of Usage (PoU)
 ---
 
 __To incentivize power users and strategic partners to use our infrastructure for deploying their capital and distributed applications, we developed an algorithm that provides a scalable and low-fee system for the users of the network.__
 
-The Proof-of-Trade (PoT) consensus is built directly into the blockchain infrastructure and the nodes block-building source-code. The validators (the nodes that are creating the blocks), select the best transactions to be included based on the `nonce` of the sender account (address).
+The Proof-of-Usage (PoU) consensus is built directly into the blockchain infrastructure and the nodes block-building source-code. The validators (the nodes that are creating the blocks), select the best transactions to be included based on the `nonce` of the sender account (address).
 
 ## Scalability
 ---
