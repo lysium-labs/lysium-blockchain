@@ -55,7 +55,7 @@ Building `geth` requires both a Go (version 1.14 or later) and a C compiler. You
 In order to easily run the blockchain, you need to download the `Dockerfile` and execute locally on your computer.
 The server will sync automatically with the rest of the blockchain network.
 
-#### Commands
+## Command line tool
 
 `geth` = The Lysium Network client (similar to Ethereum-go)
 
